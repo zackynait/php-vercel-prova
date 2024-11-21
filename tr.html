@@ -3,24 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js Visualization</title>
+    <title>Rotating Prisms with Popup</title>
     <style>
-        body { margin: 0; }
+        body { margin: 0; overflow: hidden; }
         canvas { display: block; }
+        #popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            z-index: 10;
+        }
+        #popup button {
+            margin-top: 10px;
+            padding: 5px 10px;
+            cursor: pointer;
+            background: #f00;
+            border: none;
+            color: white;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
+    <div id="popup">
+        <p id="popup-text">Questo è un popup!</p>
+        <button id="close-popup">Chiudi</button>
+    </div>
     <canvas id="three-canvas"></canvas>
+     <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.138.0/build/three.module.js",
+                "OrbitControls": "https://unpkg.com/three@0.138.0/examples/jsm/controls/OrbitControls.js"
+            }
+        }
+    </script>
     <script type="module">
-        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.module.js';
-        import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.154.0/examples/jsm/controls/OrbitControls.js';
-
+      
         // Scena, Camera, Renderer
         const canvas = document.getElementById('three-canvas');
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ canvas });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.position.z = 15;
 
         // Luci
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -29,46 +61,69 @@
         pointLight.position.set(10, 10, 10);
         scene.add(pointLight);
 
-        // Materiale per gli oggetti
-        const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+        // Materiali
+        const blueMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff });
 
-        // Creare tre oggetti
-        const objects = [];
-        const geometry = new THREE.SphereGeometry(1, 32, 32);
+        // Creare i prismi blu
+        const bluePrisms = [];
+        const prismGeometry = new THREE.CylinderGeometry(0.5, 0.5, 2, 6); // Prisma esagonale
         for (let i = 0; i < 3; i++) {
-            const sphere = new THREE.Mesh(geometry, material);
-            sphere.position.set(i * 5 - 5, 0, 0);
-            objects.push(sphere);
-            scene.add(sphere);
+            const prism = new THREE.Mesh(prismGeometry, blueMaterial);
+            prism.position.set(-5, i * 4 - 4, 0);
+            bluePrisms.push(prism);
+            scene.add(prism);
         }
 
-        // Canali tra gli oggetti
-        const channelMaterial = new THREE.MeshBasicMaterial({ color: 0xffa500, transparent: true, opacity: 0.8 });
-        const cylinderGeometry = new THREE.CylinderGeometry(0.1, 0.1, 5, 32);
-        const channels = [];
-        for (let i = 0; i < objects.length; i++) {
-            const cylinder = new THREE.Mesh(cylinderGeometry, channelMaterial);
-            cylinder.position.set((i - 0.5) * 5, 0, 0);
-            cylinder.rotation.z = Math.PI / 2;
-            channels.push(cylinder);
-            scene.add(cylinder);
-        }
+        // Raycaster per rilevare clic
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        // Popup
+        const popup = document.getElementById('popup');
+        const popupText = document.getElementById('popup-text');
+        const closePopup = document.getElementById('close-popup');
+
+        closePopup.addEventListener('click', () => {
+            popup.style.display = 'none';
+        });
+
+        // Gestione del clic
+        window.addEventListener('click', (event) => {
+            // Calcolare posizione del mouse normalizzata
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            // Impostare il raycaster
+            raycaster.setFromCamera(mouse, camera);
+
+            // Controllare l'intersezione con i prismi
+            const intersects = raycaster.intersectObjects(bluePrisms);
+            if (intersects.length > 0) {
+                const clickedPrism = intersects[0].object;
+                const index = bluePrisms.indexOf(clickedPrism);
+                
+                // Mostrare il popup con un messaggio specifico
+                popupText.innerText = `Hai cliccato sul prisma numero ${index + 1}`;
+                popup.style.display = 'block';
+            }
+        });
 
         // Animazioni
         function animate() {
             requestAnimationFrame(animate);
-            objects.forEach((obj, idx) => {
-                obj.rotation.y += 0.01; // Rotazione
-                obj.rotation.x += 0.01;
+
+            // Rotazione dei prismi
+            bluePrisms.forEach(prism => {
+                prism.rotation.x += 0.02;
+                prism.rotation.y += 0.02;
             });
+
+            // Render
             renderer.render(scene, camera);
         }
 
-        // Imposta la camera e i controlli
-        camera.position.z = 10;
+        // Controlli della camera
         new OrbitControls(camera, renderer.domElement);
-
-        animate();
 
         // Gestione del ridimensionamento
         window.addEventListener('resize', () => {
@@ -76,6 +131,8 @@
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
+
+        animate();
     </script>
 </body>
 </html>
