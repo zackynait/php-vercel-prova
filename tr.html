@@ -78,7 +78,7 @@
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ canvas });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        camera.position.set(0, 0, 20);
+        camera.position.set(0, 5, 20);
 
         // Aggiungi luci
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -86,34 +86,6 @@
         const pointLight = new THREE.PointLight(0xffffff, 1);
         pointLight.position.set(0, 10, 10);
         scene.add(pointLight);
-
-        // Oggetti rotanti
-        const objects = [];
-        const geometry = new THREE.BoxGeometry(2, 2, 2);
-        const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-
-        for (let i = 0; i < 3; i++) {
-            const object = new THREE.Mesh(geometry, material);
-            object.position.set(i * 5 - 5, 0, 0);
-            scene.add(object);
-            objects.push(object);
-        }
-
-        // Sfondo stellato
-        const starGeometry = new THREE.BufferGeometry();
-        const starCount = 500;
-        const starPositions = new Float32Array(starCount * 3);
-
-        for (let i = 0; i < starCount; i++) {
-            starPositions[i * 3] = (Math.random() - 0.5) * 100;
-            starPositions[i * 3 + 1] = (Math.random() - 0.5) * 100;
-            starPositions[i * 3 + 2] = (Math.random() - 0.5) * 100;
-        }
-
-        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5 });
-        const stars = new THREE.Points(starGeometry, starMaterial);
-        scene.add(stars);
 
         // Porta
         const doorGeometry = new THREE.BoxGeometry(5, 10, 1);
@@ -124,73 +96,86 @@
 
         let doorOpen = false;
 
-        // Clicca per aprire la porta
-        window.addEventListener('click', (event) => {
-            const { clientX, clientY } = event;
-            const width = window.innerWidth;
-            const height = window.innerHeight;
+        // Trofeo (cambio a coppa gialla)
+        const trophyGeometry = new THREE.CylinderGeometry(2, 2, 5, 32);
+        const trophyMaterial = new THREE.MeshStandardMaterial({ color: 0xffff00 });
+        const trophy = new THREE.Mesh(trophyGeometry, trophyMaterial);
+        trophy.position.set(0, 5, 10);
+        scene.add(trophy);
 
-            const x = (clientX / width) * 2 - 1;
-            const y = -(clientY / height) * 2 + 1;
+        // Macchinina (oggetto controllabile)
+        const carGeometry = new THREE.BoxGeometry(2, 1, 1);
+        const carMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+        const car = new THREE.Mesh(carGeometry, carMaterial);
+        car.position.set(0, 1, 0);
+        scene.add(car);
 
-            const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera({ x, y }, camera);
-            const intersects = raycaster.intersectObject(door);
+        // Controlli della macchinina
+        const carSpeed = 0.2;
+        const carDirection = { x: 0, y: 0 };
 
-            if (intersects.length > 0 && !doorOpen) {
-                doorOpen = true;
-                door.rotation.y += Math.PI / 2;
+        window.addEventListener('keydown', (event) => {
+            switch (event.key) {
+                case 'ArrowUp': 
+                    carDirection.y = 1;
+                    break;
+                case 'ArrowDown': 
+                    carDirection.y = -1;
+                    break;
+                case 'ArrowLeft': 
+                    carDirection.x = -1;
+                    break;
+                case 'ArrowRight': 
+                    carDirection.x = 1;
+                    break;
             }
         });
 
-        // Aggiungi OrbitControls per la rotazione con il mouse
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true; // Abilita la fluidità dei movimenti
-        controls.dampingFactor = 0.25;
-        controls.screenSpacePanning = false; // Disabilita il panning nella scena
-        controls.maxPolarAngle = Math.PI / 2; // Limita il movimento verticale
+        window.addEventListener('keyup', (event) => {
+            if (event.key === 'ArrowUp' || event.key === 'ArrowDown') carDirection.y = 0;
+            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') carDirection.x = 0;
+        });
 
-        // Aggiungi una coppa lucente al centro
-        const cupGeometry = new THREE.SphereGeometry(3, 32, 32);
-        const cupMaterial = new THREE.MeshStandardMaterial({ color: 0xaaaaff, metalness: 0.9, roughness: 0.1 });
-        const cup = new THREE.Mesh(cupGeometry, cupMaterial);
-        scene.add(cup);
+        // Funzione di esplosione
+        function explodeTrophy() {
+            const explosionGeometry = new THREE.SphereGeometry(1, 32, 32);
+            const explosionMaterial = new THREE.MeshStandardMaterial({ color: 0xff4500 });
+            const explosion = new THREE.Mesh(explosionGeometry, explosionMaterial);
+            explosion.position.copy(trophy.position);
+            scene.add(explosion);
+            setTimeout(() => scene.remove(explosion), 500);
+        }
 
-        // Aggiungi un esagono che ruota attorno alla coppa
-        const hexagonGeometry = new THREE.CircleGeometry(3, 6);
-        const hexagonMaterial = new THREE.MeshStandardMaterial({ color: 0xff00ff, side: THREE.DoubleSide });
-        const hexagon = new THREE.Mesh(hexagonGeometry, hexagonMaterial);
-        hexagon.position.set(0, 0, 5);
-        scene.add(hexagon);
-
-        // Ruotare l'esagono intorno alla coppa
-        let angle = 0;
+        // Funzione per aprire la porta
+        function openDoor() {
+            if (!doorOpen) {
+                door.rotation.y += Math.PI / 2;
+                doorOpen = true;
+            }
+        }
 
         // Animazione
         const animate = () => {
             requestAnimationFrame(animate);
 
-            // Ruotare gli oggetti
-            objects.forEach((object) => {
-                object.rotation.x += 0.01;
-                object.rotation.y += 0.01;
-            });
+            // Sposta la macchinina
+            car.position.x += carDirection.x * carSpeed;
+            car.position.y += carDirection.y * carSpeed;
 
-            // Ruota l'esagono intorno alla coppa
-            angle += 0.01;
-            hexagon.position.x = Math.cos(angle) * 10;
-            hexagon.position.z = Math.sin(angle) * 10;
+            // Controlla la collisione con il trofeo (coppa gialla)
+            const carBox = new THREE.Box3().setFromObject(car);
+            const trophyBox = new THREE.Box3().setFromObject(trophy);
 
-            // Movimento delle stelle
-            const starPositions = stars.geometry.attributes.position.array;
-            for (let i = 0; i < starPositions.length; i += 3) {
-                starPositions[i + 1] -= 0.02;
-                if (starPositions[i + 1] < -50) starPositions[i + 1] = 50;
+            if (carBox.intersectsBox(trophyBox)) {
+                explodeTrophy();  // Esplosione del trofeo
+                trophy.position.set(1000, 1000, 1000);  // Rimuove il trofeo dalla scena
             }
-            stars.geometry.attributes.position.needsUpdate = true;
 
-            // Aggiorna i controlli
-            controls.update();
+            // Controlla la collisione con la porta
+            const doorBox = new THREE.Box3().setFromObject(door);
+            if (carBox.intersectsBox(doorBox)) {
+                openDoor();  // Apre la porta
+            }
 
             // Rendering della scena
             renderer.render(scene, camera);
