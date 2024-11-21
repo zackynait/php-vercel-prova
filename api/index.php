@@ -1,14 +1,9 @@
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive 3D Scene</title>
+    <title>Interactive 3D Scene with Car</title>
     <style>
         body { margin: 0; overflow: hidden; }
         canvas { display: block; }
@@ -16,7 +11,7 @@
 </head>
 <body>
     <canvas id="three-canvas"></canvas>
-         <script type="importmap">
+    <script type="importmap">
         {
             "imports": {
                 "three": "https://unpkg.com/three@0.138.0/build/three.module.js",
@@ -25,7 +20,7 @@
         }
     </script>
     <script type="module">
-          import * as THREE from 'three';
+        import * as THREE from 'three';
         import { OrbitControls } from 'OrbitControls';
 
         const canvas = document.getElementById('three-canvas');
@@ -33,7 +28,7 @@
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ canvas });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        camera.position.set(0, 0, 20);
+        camera.position.set(0, 5, 20); // Spostiamo la camera per avere una buona visione della scena
 
         // Aggiungi luci
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -98,22 +93,52 @@
             }
         });
 
+        // Caricamento della macchina
+        const carGeometry = new THREE.BoxGeometry(2, 1, 4);
+        const carMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+        const car = new THREE.Mesh(carGeometry, carMaterial);
+        car.position.set(0, 0.5, 0);
+        scene.add(car);
+
+        // Movimento della macchina
+        const carSpeed = 0.2;
+        let carDirection = new THREE.Vector3(0, 0, 0); // Direzione iniziale della macchina
+
+        // Ascolta gli eventi delle frecce direzionali
+        window.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowUp') {
+                carDirection.z = -carSpeed; // Muove in avanti
+            } else if (event.key === 'ArrowDown') {
+                carDirection.z = carSpeed; // Muove indietro
+            } else if (event.key === 'ArrowLeft') {
+                carDirection.x = -carSpeed; // Muove a sinistra
+            } else if (event.key === 'ArrowRight') {
+                carDirection.x = carSpeed; // Muove a destra
+            }
+        });
+
+        window.addEventListener('keyup', (event) => {
+            if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+                carDirection.z = 0; // Ferma il movimento in Z
+            }
+            if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+                carDirection.x = 0; // Ferma il movimento in X
+            }
+        });
+
         // Aggiungi OrbitControls per la rotazione con il mouse
         const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true; // Abilita la fluidità dei movimenti
+        controls.enableDamping = true;
         controls.dampingFactor = 0.25;
-        controls.screenSpacePanning = false; // Disabilita il panning nella scena
-        controls.maxPolarAngle = Math.PI / 2; // Limita il movimento verticale
+        controls.screenSpacePanning = false;
+        controls.maxPolarAngle = Math.PI / 2;
 
         // Animazione
         const animate = () => {
             requestAnimationFrame(animate);
 
-            // Rotazione degli oggetti
-            objects.forEach((object) => {
-                object.rotation.x += 0.01;
-                object.rotation.y += 0.01;
-            });
+            // Movimento della macchina
+            car.position.add(carDirection);
 
             // Movimento delle stelle
             const starPositions = stars.geometry.attributes.position.array;
