@@ -5,7 +5,8 @@
     }
   },
   "routes": [
-    { "src": "/(.*)", "dest": "/api/index.php" }
+    { "src": "/(.*)", "dest": "/api/index.php" },
+    { "src": "/tree-page", "dest": "/tree-page.html" }
   ],
   "build": {
     "env": {
