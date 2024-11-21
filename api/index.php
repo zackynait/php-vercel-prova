@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js Visualization</title>
+    <title>Interactive 3D Scene</title>
     <style>
-        body { margin: 0; }
+        body { margin: 0; overflow: hidden; }
         canvas { display: block; }
     </style>
 </head>
 <body>
     <canvas id="three-canvas"></canvas>
-    <script type="importmap">
+     <script type="importmap">
         {
             "imports": {
                 "three": "https://unpkg.com/three@0.138.0/build/three.module.js",
@@ -20,7 +20,7 @@
         }
     </script>
     <script type="module">
-       import * as THREE from 'three';
+   import * as THREE from 'three';
         import { OrbitControls } from 'OrbitControls';
         // Scena, Camera, Renderer
         const canvas = document.getElementById('three-canvas');
@@ -28,95 +28,111 @@
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ canvas });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        camera.position.z = 15;
+        camera.position.set(0, 0, 20);
 
-        // Luci
+        // Luce
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         scene.add(ambientLight);
         const pointLight = new THREE.PointLight(0xffffff, 1);
-        pointLight.position.set(10, 10, 10);
+        pointLight.position.set(0, 10, 10);
         scene.add(pointLight);
 
-        // Materiali
-        const blueMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff });
-        const purpleMaterial = new THREE.MeshStandardMaterial({ color: 0x800080 });
-        const channelMaterial = new THREE.MeshBasicMaterial({ color: 0xffa500, transparent: true, opacity: 0.5 });
+        // Oggetti rotanti
+        const objects = [];
+        const geometry = new THREE.BoxGeometry(2, 2, 2);
+        const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
 
-        // Creare i prismi blu
-        const bluePrisms = [];
-        const prismGeometry = new THREE.CylinderGeometry(0.5, 0.5, 2, 6); // Prisma esagonale
         for (let i = 0; i < 3; i++) {
-            const prism = new THREE.Mesh(prismGeometry, blueMaterial);
-            prism.position.set(-5, i * 4 - 4, 0);
-            bluePrisms.push(prism);
-            scene.add(prism);
+            const object = new THREE.Mesh(geometry, material);
+            object.position.set(i * 5 - 5, 0, 0);
+            scene.add(object);
+            objects.push(object);
         }
 
-        // Creare gli oggetti viola
-        const purpleObjects = [];
-        const sphereGeometry = new THREE.SphereGeometry(0.8, 32, 32);
-        for (let i = 0; i < 3; i++) {
-            const sphere = new THREE.Mesh(sphereGeometry, purpleMaterial);
-            sphere.position.set(5, i * 4 - 4, 0);
-            purpleObjects.push(sphere);
-            scene.add(sphere);
+        // Sfondo stellato
+        const starGeometry = new THREE.BufferGeometry();
+        const starCount = 500;
+        const starPositions = new Float32Array(starCount * 3);
+
+        for (let i = 0; i < starCount; i++) {
+            starPositions[i * 3] = (Math.random() - 0.5) * 100;
+            starPositions[i * 3 + 1] = (Math.random() - 0.5) * 100;
+            starPositions[i * 3 + 2] = (Math.random() - 0.5) * 100;
         }
 
-        // Creare i canali
-        const channels = [];
-        const channelGeometry = new THREE.CylinderGeometry(0.1, 0.1, 10, 32);
-        for (let i = 0; i < 3; i++) {
-            const channel = new THREE.Mesh(channelGeometry, channelMaterial);
-            channel.position.set(0, i * 4 - 4, 0);
-            channel.rotation.z = Math.PI / 2;
-            channels.push(channel);
-            scene.add(channel);
-        }
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.5 });
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
 
-        // Messaggi colorati nei canali
-        const messageGeometry = new THREE.SphereGeometry(0.2, 16, 16);
-        const messageMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        const messages = channels.map(() => new THREE.Mesh(messageGeometry, messageMaterial));
-        messages.forEach((msg, i) => {
-            msg.position.copy(channels[i].position);
-            scene.add(msg);
+        // Porta
+        const doorGeometry = new THREE.BoxGeometry(5, 10, 1);
+        const doorMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
+        const door = new THREE.Mesh(doorGeometry, doorMaterial);
+        door.position.set(0, 0, -50);
+        scene.add(door);
+
+        let doorOpen = false;
+
+        // Movimento della telecamera
+        let moveForward = false;
+
+        window.addEventListener('click', (event) => {
+            const { clientX, clientY } = event;
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
+            const x = (clientX / width) * 2 - 1;
+            const y = -(clientY / height) * 2 + 1;
+
+            if (Math.abs(x) < 0.2 && Math.abs(y) < 0.2) {
+                moveForward = true;
+            }
+
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera({ x, y }, camera);
+            const intersects = raycaster.intersectObject(door);
+
+            if (intersects.length > 0 && !doorOpen) {
+                doorOpen = true;
+                door.rotation.y += Math.PI / 2;
+            }
         });
 
-        // Animazioni
-        function animateMessages() {
-            messages.forEach((msg, i) => {
-                msg.position.x += 0.1; // Movimento lungo il canale
-                if (msg.position.x > 5) msg.position.x = -5; // Ripristino
-            });
-        }
-
-        function animate() {
+        // Animazione
+        const animate = () => {
             requestAnimationFrame(animate);
 
-            // Rotazione dei prismi
-            bluePrisms.forEach(prism => {
-                prism.rotation.x += 0.02;
-                prism.rotation.y += 0.02;
+            // Rotazione degli oggetti
+            objects.forEach((object) => {
+                object.rotation.x += 0.01;
+                object.rotation.y += 0.01;
             });
 
-            // Movimento dei messaggi
-            animateMessages();
+            // Movimento avanti
+            if (moveForward && camera.position.z > -50) {
+                camera.position.z -= 0.5;
+            }
 
-            // Render
+            // Stelle cadenti
+            const starPositions = stars.geometry.attributes.position.array;
+            for (let i = 0; i < starPositions.length; i += 3) {
+                starPositions[i + 1] -= 0.02; // Movimento verso il basso
+                if (starPositions[i + 1] < -50) starPositions[i + 1] = 50; // Reset
+            }
+            stars.geometry.attributes.position.needsUpdate = true;
+
             renderer.render(scene, camera);
-        }
+        };
 
-        // Controlli della camera
-        new OrbitControls(camera, renderer.domElement);
+        animate();
 
-        // Gestione del ridimensionamento
+        // Adatta il canvas alla finestra
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
-
-        animate();
     </script>
 </body>
 </html>
