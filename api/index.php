@@ -1,3 +1,8 @@
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,7 +16,7 @@
 </head>
 <body>
     <canvas id="three-canvas"></canvas>
-     <script type="importmap">
+         <script type="importmap">
         {
             "imports": {
                 "three": "https://unpkg.com/three@0.138.0/build/three.module.js",
@@ -20,9 +25,9 @@
         }
     </script>
     <script type="module">
-   import * as THREE from 'three';
+          import * as THREE from 'three';
         import { OrbitControls } from 'OrbitControls';
-        // Scena, Camera, Renderer
+
         const canvas = document.getElementById('three-canvas');
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -30,7 +35,7 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         camera.position.set(0, 0, 20);
 
-        // Luce
+        // Aggiungi luci
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
         scene.add(ambientLight);
         const pointLight = new THREE.PointLight(0xffffff, 1);
@@ -74,9 +79,7 @@
 
         let doorOpen = false;
 
-        // Movimento della telecamera
-        let moveForward = false;
-
+        // Clicca per aprire la porta
         window.addEventListener('click', (event) => {
             const { clientX, clientY } = event;
             const width = window.innerWidth;
@@ -84,10 +87,6 @@
 
             const x = (clientX / width) * 2 - 1;
             const y = -(clientY / height) * 2 + 1;
-
-            if (Math.abs(x) < 0.2 && Math.abs(y) < 0.2) {
-                moveForward = true;
-            }
 
             const raycaster = new THREE.Raycaster();
             raycaster.setFromCamera({ x, y }, camera);
@@ -99,6 +98,13 @@
             }
         });
 
+        // Aggiungi OrbitControls per la rotazione con il mouse
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; // Abilita la fluidità dei movimenti
+        controls.dampingFactor = 0.25;
+        controls.screenSpacePanning = false; // Disabilita il panning nella scena
+        controls.maxPolarAngle = Math.PI / 2; // Limita il movimento verticale
+
         // Animazione
         const animate = () => {
             requestAnimationFrame(animate);
@@ -109,19 +115,18 @@
                 object.rotation.y += 0.01;
             });
 
-            // Movimento avanti
-            if (moveForward && camera.position.z > -50) {
-                camera.position.z -= 0.5;
-            }
-
-            // Stelle cadenti
+            // Movimento delle stelle
             const starPositions = stars.geometry.attributes.position.array;
             for (let i = 0; i < starPositions.length; i += 3) {
-                starPositions[i + 1] -= 0.02; // Movimento verso il basso
-                if (starPositions[i + 1] < -50) starPositions[i + 1] = 50; // Reset
+                starPositions[i + 1] -= 0.02;
+                if (starPositions[i + 1] < -50) starPositions[i + 1] = 50;
             }
             stars.geometry.attributes.position.needsUpdate = true;
 
+            // Aggiorna i controlli
+            controls.update();
+
+            // Rendering della scena
             renderer.render(scene, camera);
         };
 
