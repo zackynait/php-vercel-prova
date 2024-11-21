@@ -5,9 +5,10 @@
     }
   },
   "routes": [
+     { "src": "/tree", "dest": "/api/tree.html" },
+    { "src": "/tr", "dest": "/tr.html" },
     { "src": "/(.*)", "dest": "/api/index.php" },
-    { "src": "/tree", "dest": "/api/tree.html" },
-    { "src": "/tr", "dest": "/tr.html" }
+   
 
   ],
   "build": {
