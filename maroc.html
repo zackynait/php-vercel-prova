@@ -47,7 +47,7 @@ document.body.appendChild(renderer.domElement);
 // Carica la texture PNG della mappa del Marocco
 const textureLoader = new THREE.TextureLoader();
 textureLoader.load(
-    './morocco.png', // Percorso del file PNG
+    './morocco.jpg', // Percorso del file PNG
     (texture) => {
         // Crea la geometria della mappa come un piano
         const geometry = new THREE.PlaneGeometry(5, 6); // Modifica le dimensioni del piano per adattarle alla mappa
