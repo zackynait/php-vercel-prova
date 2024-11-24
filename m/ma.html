@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Custom Polygon from SVG</title>
+    <title>Custom Polygon and Sphere</title>
     <style>
         body {
             margin: 0;
@@ -45,6 +45,12 @@
         directionalLight.position.set(1, 1, 1).normalize();
         scene.add(directionalLight);
 
+        // Creazione di una sfera come oggetto "normale"
+        const sphereGeometry = new THREE.SphereGeometry(1, 32, 32);
+        const sphereMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        scene.add(sphere);
+
         // Caricamento del file SVG
         const svgLoader = new SVGLoader();
         const url = './your_custom_polygon.svg'; // Sostituisci con il percorso del tuo file SVG
@@ -71,6 +77,11 @@
         function animate() {
             requestAnimationFrame(animate);
             orbit.update();  // Aggiorna i controlli orbitanti
+
+            // Rotazione della sfera per visibilità
+            sphere.rotation.x += 0.01;
+            sphere.rotation.y += 0.01;
+
             renderer.render(scene, camera);
         }
 
