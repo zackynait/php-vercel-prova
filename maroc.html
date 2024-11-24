@@ -32,87 +32,47 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // Creazione della scena e della telecamera
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(
-            45,
-            window.innerWidth / window.innerHeight,
-            0.1,
-            1000
-        );
-        const orbit = new OrbitControls(camera, renderer.domElement);
-        camera.position.set(0, 0, 100); // Posizione della telecamera
-        orbit.update();
+        // Crea la scena
+const scene = new THREE.Scene();
 
-        // Aggiungi luci alla scena
-        const ambientLight = new THREE.AmbientLight(0xffffff, 1); // Luce ambientale
-        scene.add(ambientLight);
+// Aggiungi una fotocamera
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 5;
 
-        const pointLight = new THREE.PointLight(0xffffff, 1); // Luce puntiforme
-        pointLight.position.set(50, 50, 50); // Posizione della luce
-        scene.add(pointLight);
+// Crea il renderer e aggiungi al DOM
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-        // Caricamento dell'SVG (Sagoma del Marocco)
-        const loader = new SVGLoader();
-        loader.load(
-            'ma.svg', // Percorso del file SVG
-            (data) => {
-                const paths = data.paths;
-                const group = new THREE.Group();
-
-                // Creazione di forme 3D a partire dai percorsi SVG
-                paths.forEach((path) => {
-                    const material = new THREE.MeshStandardMaterial({
-                        color: 0xff0000, // Rosso per il corpo della bandiera
-                        side: THREE.DoubleSide
-                    });
-
-                    const shapes = SVGLoader.createShapes(path);
-                    shapes.forEach((shape) => {
-                        const geometry = new THREE.ShapeGeometry(shape);
-                        const mesh = new THREE.Mesh(geometry, material);
-                        group.add(mesh);
-                    });
-                });
-
-                // Scala e posizione del gruppo
-                group.scale.set(0.5, 0.5, 0.5); // Adatta la scala
-                group.position.set(0, 0, 0); // Posizione centrata
-                scene.add(group);
-
-                // Aggiungi la stella verde
-                const starTexture = new THREE.TextureLoader().load('./star.png'); // Percorso alla stella verde
-                const starMaterial = new THREE.MeshBasicMaterial({
-                    map: starTexture,
-                    transparent: true
-                });
-
-                const starGeometry = new THREE.PlaneGeometry(15, 15); // Dimensioni della stella
-                const starMesh = new THREE.Mesh(starGeometry, starMaterial);
-                starMesh.position.set(0, 0, 1); // Posizione sopra la sagoma
-                scene.add(starMesh);
-            },
-            (xhr) => {
-    if (xhr.total > 0) {
-        console.log((xhr.loaded / xhr.total) * 100 + '% caricato');
-    } else {
-        console.log('Caricamento in corso...');
+// Carica la texture PNG della mappa del Marocco
+const textureLoader = new THREE.TextureLoader();
+textureLoader.load(
+    './morocco.png', // Percorso del file PNG
+    (texture) => {
+        // Crea la geometria della mappa come un piano
+        const geometry = new THREE.PlaneGeometry(5, 6); // Modifica le dimensioni del piano per adattarle alla mappa
+        const material = new THREE.MeshBasicMaterial({
+            map: texture, // Assegna la texture alla mappa
+            side: THREE.DoubleSide, // Visualizza entrambi i lati
+        });
+        
+        const mesh = new THREE.Mesh(geometry, material); // Crea il mesh
+        scene.add(mesh); // Aggiungi il mesh alla scena
+    },
+    undefined, // Funzione di caricamento progressivo, se necessario
+    (error) => {
+        console.error('Errore nel caricamento della texture:', error);
     }
-},
-            (error) => {
-                console.error('Errore nel caricamento dell\'SVG:', error);
-            }
-        );
+);
 
-        // Aggiungi una griglia per il supporto visivo
-        const gridHelper = new THREE.GridHelper(100, 20); // Griglia 100x100 con 20 divisioni
-        scene.add(gridHelper);
+// Funzione di animazione per renderizzare la scena
+function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+}
 
-        // Funzione di animazione
-        function animate() {
-            renderer.render(scene, camera);
-        }
-        renderer.setAnimationLoop(animate);
+animate();
+
 
         // Adatta alla finestra
         window.addEventListener('resize', function () {
