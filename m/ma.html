@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Custom Polygon and Sphere</title>
+    <title>Delayed Rendering with Textures</title>
     <style>
         body {
             margin: 0;
@@ -17,8 +17,7 @@
         {
             "imports": {
                 "three": "https://unpkg.com/three@0.138.0/build/three.module.js",
-                "OrbitControls": "https://unpkg.com/three@0.138.0/examples/jsm/controls/OrbitControls.js",
-                "SVGLoader": "https://unpkg.com/three@0.138.0/examples/jsm/loaders/SVGLoader.js"
+                "OrbitControls": "https://unpkg.com/three@0.138.0/examples/jsm/controls/OrbitControls.js"
             }
         }
     </script>
@@ -26,7 +25,6 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'OrbitControls';
-        import { SVGLoader } from 'SVGLoader';
 
         // Creazione della scena e della camera
         const scene = new THREE.Scene();
@@ -45,46 +43,53 @@
         directionalLight.position.set(1, 1, 1).normalize();
         scene.add(directionalLight);
 
-        // Creazione di una sfera come oggetto "normale"
-        const sphereGeometry = new THREE.SphereGeometry(1, 32, 32);
-        const sphereMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-        scene.add(sphere);
+        // Creazione della geometria di un cubo
+        const geometry = new THREE.BoxGeometry();
+        const material = new THREE.MeshStandardMaterial({ color: 0xeeeeee });
+        const cube = new THREE.Mesh(geometry, material);
+        scene.add(cube);
 
-        // Caricamento del file SVG
-        const svgLoader = new SVGLoader();
-        const url = './your_custom_polygon.svg'; // Sostituisci con il percorso del tuo file SVG
+        // Caricamento della texture
+        const textureLoader = new THREE.TextureLoader();
+        const textureURL = 'https://threejs.org/examples/textures/uv_grid_opengl.jpg';  // URL della texture
 
-        svgLoader.load(url, function (data) {
-            const paths = data.paths;
-            const material = new THREE.MeshStandardMaterial({
-                color: 0xff0000, // Cambia il colore se necessario
-                side: THREE.DoubleSide
-            });
+        let isTextureLoaded = false;
 
-            paths.forEach(path => {
-                const shapes = path.toShapes(true); // Converte il percorso SVG in forme 3D
-                shapes.forEach(shape => {
-                    const geometry = new THREE.ShapeGeometry(shape);
-                    const mesh = new THREE.Mesh(geometry, material);
-                    mesh.scale.set(0.5, 0.5, 0.5); // Scala il poligono
-                    scene.add(mesh);
-                });
-            });
-        });
+        // Carica la texture
+        textureLoader.load(
+            textureURL,
+            (texture) => {
+                // Una volta che la texture è stata caricata, applicala al materiale
+                cube.material.map = texture;
+                cube.material.needsUpdate = true;
+                isTextureLoaded = true;
+            },
+            undefined, // Progresso del caricamento
+            (error) => {
+                console.error('Errore nel caricamento della texture:', error);
+            }
+        );
 
         // Funzione di animazione
         function animate() {
+            if (!isTextureLoaded) {
+                // Non renderizzare nulla finché la texture non è stata caricata
+                requestAnimationFrame(animate);
+                return;
+            }
+
             requestAnimationFrame(animate);
             orbit.update();  // Aggiorna i controlli orbitanti
 
-            // Rotazione della sfera per visibilità
-            sphere.rotation.x += 0.01;
-            sphere.rotation.y += 0.01;
+            // Rotazione del cubo
+            cube.rotation.x += 0.01;
+            cube.rotation.y += 0.01;
 
+            // Ora che la texture è stata caricata, esegui il rendering
             renderer.render(scene, camera);
         }
 
+        // Avvia l'animazione
         animate();
 
         // Ricalcola la dimensione e la posizione della camera in caso di ridimensionamento della finestra
