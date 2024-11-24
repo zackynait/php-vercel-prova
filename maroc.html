@@ -55,7 +55,7 @@
         // Caricamento dell'SVG (Sagoma del Marocco)
         const loader = new SVGLoader();
         loader.load(
-            './morocco.svg', // Percorso del file SVG
+            'morocco.svg', // Percorso del file SVG
             (data) => {
                 const paths = data.paths;
                 const group = new THREE.Group();
@@ -93,8 +93,12 @@
                 scene.add(starMesh);
             },
             (xhr) => {
-                console.log((xhr.loaded / xhr.total) * 100 + '% caricato');
-            },
+    if (xhr.total > 0) {
+        console.log((xhr.loaded / xhr.total) * 100 + '% caricato');
+    } else {
+        console.log('Caricamento in corso...');
+    }
+},
             (error) => {
                 console.error('Errore nel caricamento dell\'SVG:', error);
             }
