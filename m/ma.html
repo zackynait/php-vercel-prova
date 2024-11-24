@@ -27,71 +27,50 @@
         import { OrbitControls } from 'OrbitControls';
 
         // Creazione della scena e della camera
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+      
+     // instantiate a loader
 
-        // Aggiunta dei controlli orbitanti per navigare nella scena
-        const orbit = new OrbitControls(camera, renderer.domElement);
-        camera.position.set(0, 0, 5);  // Impostiamo una posizione iniziale per la camera
-        orbit.update();
-
-        // Aggiunta di una luce direzionale
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-        directionalLight.position.set(1, 1, 1).normalize();
-        scene.add(directionalLight);
-
-        // Creazione della geometria di un cubo
-        const geometry = new THREE.BoxGeometry();
-        const material = new THREE.MeshStandardMaterial({ color: 0xeeeeee });
-        const cube = new THREE.Mesh(geometry, material);
-        scene.add(cube);
-
-        // Caricamento della texture
-        const textureLoader = new THREE.TextureLoader();
-        const textureURL = 'https://threejs.org/examples/textures/uv_grid_opengl.jpg';  // URL della texture
-
-        let isTextureLoaded = false;
-
-        // Carica la texture
-        textureLoader.load(
-            textureURL,
-            (texture) => {
-                // Una volta che la texture è stata caricata, applicala al materiale
-                cube.material.map = texture;
-                cube.material.needsUpdate = true;
-                isTextureLoaded = true;
-            },
-            undefined, // Progresso del caricamento
-            (error) => {
-                console.error('Errore nel caricamento della texture:', error);
-            }
-        );
-
-        // Funzione di animazione
-        function animate() {
-            if (!isTextureLoaded) {
-                // Non renderizzare nulla finché la texture non è stata caricata
-                requestAnimationFrame(animate);
-                return;
-            }
-
-            requestAnimationFrame(animate);
-            orbit.update();  // Aggiorna i controlli orbitanti
-
-            // Rotazione del cubo
-            cube.rotation.x += 0.01;
-            cube.rotation.y += 0.01;
-
-            // Ora che la texture è stata caricata, esegui il rendering
-            renderer.render(scene, camera);
-        }
-
-        // Avvia l'animazione
-        animate();
-
+//-------- ----------
+// SCENE, CAMERA, RENDERER, LIGHT
+//-------- ----------
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#000000');
+const camera = new THREE.PerspectiveCamera(50, 4 / 3, 0.1, 1000);
+scene.add(camera);
+const renderer = new THREE.WebGL1Renderer();
+renderer.setSize(640, 480, false);
+( document.getElementById('demo') || document.body ).appendChild(renderer.domElement);
+//-------- ----------
+// SVG STRING
+//-------- ----------
+const str_svg = `
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="0.333333in" height="0.333333in"
+     viewBox="0 0 100 100">
+  <path id="Unnamed"
+        fill="none" stroke="black" stroke-width="1"
+        d="M 0,0
+           Q -5,2.5   0,5
+           Q  2.5,5   5,0
+        "
+   />
+</svg>`
+//-------- ----------
+// SVG LOADER PARSE, CREATE SHAPE, SHAPE GEOMETRY, MESH
+//-------- ----------
+const data = new THREE.SVGLoader().parse( str_svg );
+const shape = THREE.SVGLoader.createShapes( data.paths[0] );
+const geometry = new THREE.ShapeGeometry(shape);
+const material = new THREE.MeshNormalMaterial( { side: THREE.DoubleSide });
+const mesh = new THREE.Mesh(geometry, material);
+scene.add( mesh );
+scene.add( new THREE.GridHelper(10, 10) );
+//-------- ----------
+// RENDER
+//-------- ----------
+camera.position.set(10, 5, 10);
+camera.lookAt(0, 0, 0);
+renderer.render(scene, camera);
         // Ricalcola la dimensione e la posizione della camera in caso di ridimensionamento della finestra
         window.addEventListener('resize', function() {
             camera.aspect = window.innerWidth / window.innerHeight;
