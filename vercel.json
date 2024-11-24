@@ -6,6 +6,7 @@
   },
   "routes": [
         { "src": "/back", "dest": "/particle.html" },
+     { "src": "/maroc", "dest": "/maroc.html" },
       { "src": "/pl", "dest": "/src/planet.html" },
      { "src": "/tree", "dest": "/api/tree.html" },
     { "src": "/tr", "dest": "/tr.html" },
