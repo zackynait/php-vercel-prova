@@ -8,6 +8,7 @@
     <style>
         body {
             margin: 0;
+            overflow: hidden; /* Per evitare scrollbar quando la scena è grande */
         }
     </style>
 </head>
@@ -26,10 +27,12 @@
         import { OrbitControls } from 'OrbitControls';
         import { SVGLoader } from 'SVGLoader';
 
+        // Impostazioni del renderer
         const renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
+        // Creazione della scena e della telecamera
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(
             45,
@@ -38,15 +41,15 @@
             1000
         );
         const orbit = new OrbitControls(camera, renderer.domElement);
-        camera.position.set(0, 0, 100);
+        camera.position.set(0, 0, 100); // Posizione della telecamera
         orbit.update();
 
-        // Aggiungi luce
-        const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+        // Aggiungi luci alla scena
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1); // Luce ambientale
         scene.add(ambientLight);
 
-        const pointLight = new THREE.PointLight(0xffffff, 1);
-        pointLight.position.set(50, 50, 50);
+        const pointLight = new THREE.PointLight(0xffffff, 1); // Luce puntiforme
+        pointLight.position.set(50, 50, 50); // Posizione della luce
         scene.add(pointLight);
 
         // Caricamento dell'SVG (Sagoma del Marocco)
@@ -57,8 +60,9 @@
                 const paths = data.paths;
                 const group = new THREE.Group();
 
+                // Creazione di forme 3D a partire dai percorsi SVG
                 paths.forEach((path) => {
-                    const material = new THREE.MeshBasicMaterial({
+                    const material = new THREE.MeshStandardMaterial({
                         color: 0xff0000, // Rosso per il corpo della bandiera
                         side: THREE.DoubleSide
                     });
@@ -72,12 +76,12 @@
                 });
 
                 // Scala e posizione del gruppo
-                group.scale.set(0.5, 0.5, 0.5);
-                group.position.set(0, 0, 0);
+                group.scale.set(0.5, 0.5, 0.5); // Adatta la scala
+                group.position.set(0, 0, 0); // Posizione centrata
                 scene.add(group);
 
-                // Aggiungi stella verde
-                const starTexture = new THREE.TextureLoader().load('./star.svg'); // Percorso alla stella verde
+                // Aggiungi la stella verde
+                const starTexture = new THREE.TextureLoader().load('./star.png'); // Percorso alla stella verde
                 const starMaterial = new THREE.MeshBasicMaterial({
                     map: starTexture,
                     transparent: true
@@ -85,7 +89,7 @@
 
                 const starGeometry = new THREE.PlaneGeometry(15, 15); // Dimensioni della stella
                 const starMesh = new THREE.Mesh(starGeometry, starMaterial);
-                starMesh.position.set(0, 0, 1); // Sopra la sagoma
+                starMesh.position.set(0, 0, 1); // Posizione sopra la sagoma
                 scene.add(starMesh);
             },
             (xhr) => {
@@ -95,6 +99,10 @@
                 console.error('Errore nel caricamento dell\'SVG:', error);
             }
         );
+
+        // Aggiungi una griglia per il supporto visivo
+        const gridHelper = new THREE.GridHelper(100, 20); // Griglia 100x100 con 20 divisioni
+        scene.add(gridHelper);
 
         // Funzione di animazione
         function animate() {
