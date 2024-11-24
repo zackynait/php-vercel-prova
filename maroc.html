@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Morocco Shape</title>
+    <title>Map of Morocco</title>
     <style>
         body {
             margin: 0;
-            overflow: hidden; /* Per evitare scrollbar quando la scena è grande */
+            overflow: hidden;
         }
     </style>
 </head>
@@ -17,60 +17,49 @@
         {
             "imports": {
                 "three": "https://unpkg.com/three@0.138.0/build/three.module.js",
-                "OrbitControls": "https://unpkg.com/three@0.138.0/examples/jsm/controls/OrbitControls.js",
-                "SVGLoader": "https://unpkg.com/three@0.138.0/examples/jsm/loaders/SVGLoader.js"
+                "OrbitControls": "https://unpkg.com/three@0.138.0/examples/jsm/controls/OrbitControls.js"
             }
         }
     </script>
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'OrbitControls';
-        import { SVGLoader } from 'SVGLoader';
 
-        // Impostazioni del renderer
+        // Creazione della scena e della camera
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // Crea la scena
-const scene = new THREE.Scene();
+        // Aggiunta del controllo orbitale per navigare nella scena
+        const orbit = new OrbitControls(camera, renderer.domElement);
+        camera.position.z = 5;  // Imposta la posizione iniziale della camera
+        orbit.update();
 
-// Aggiungi una fotocamera
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.z = 5;
+        // Caricamento della texture
+        const textureLoader = new THREE.TextureLoader();
+        const moroccoTexture = textureLoader.load('./morocco.jpg'); // Percorso dell'immagine JPG
 
-// Carica la texture PNG della mappa del Marocco
-const textureLoader = new THREE.TextureLoader();
-textureLoader.load(
-    './morocco.jpg', // Percorso del file PNG
-    (texture) => {
-        // Crea la geometria della mappa come un piano
-        const geometry = new THREE.PlaneGeometry(5, 6); // Modifica le dimensioni del piano per adattarle alla mappa
-        const material = new THREE.MeshBasicMaterial({
-            map: texture, // Assegna la texture alla mappa
-            side: THREE.DoubleSide, // Visualizza entrambi i lati
+        // Creazione del piano e applicazione della texture
+        const planeGeometry = new THREE.PlaneGeometry(10, 10); // Cambia la dimensione del piano se necessario
+        const planeMaterial = new THREE.MeshBasicMaterial({
+            map: moroccoTexture,
+            side: THREE.DoubleSide
         });
-        
-        const mesh = new THREE.Mesh(geometry, material); // Crea il mesh
-        scene.add(mesh); // Aggiungi il mesh alla scena
-    },
-    undefined, // Funzione di caricamento progressivo, se necessario
-    (error) => {
-        console.error('Errore nel caricamento della texture:', error);
-    }
-);
+        const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+        scene.add(planeMesh); // Aggiungi il piano alla scena
 
-// Funzione di animazione per renderizzare la scena
-function animate() {
-    requestAnimationFrame(animate);
-    renderer.render(scene, camera);
-}
+        // Funzione di animazione
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
 
-animate();
+        animate();
 
-
-        // Adatta alla finestra
-        window.addEventListener('resize', function () {
+        // Ricalcola la dimensione e la posizione della camera in caso di ridimensionamento della finestra
+        window.addEventListener('resize', function() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
