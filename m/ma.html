@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Polygon from SVG</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.138.0/build/three.module.js",
+                "OrbitControls": "https://unpkg.com/three@0.138.0/examples/jsm/controls/OrbitControls.js",
+                "SVGLoader": "https://unpkg.com/three@0.138.0/examples/jsm/loaders/SVGLoader.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'OrbitControls';
+        import { SVGLoader } from 'SVGLoader';
+
+        // Creazione della scena e della camera
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Aggiunta del controllo orbitale per navigare nella scena
+        const orbit = new OrbitControls(camera, renderer.domElement);
+        camera.position.z = 5;  // Imposta la posizione iniziale della camera
+        orbit.update();
+
+        // Caricamento del file SVG
+        const svgLoader = new SVGLoader();
+        const url = './your_custom_polygon.svg'; // Sostituisci con il percorso del tuo file SVG
+
+        svgLoader.load(url, function (data) {
+            const paths = data.paths;
+            const material = new THREE.MeshBasicMaterial({
+                color: 0xff0000, // Cambia il colore se necessario
+                side: THREE.DoubleSide
+            });
+
+            paths.forEach(path => {
+                const shapes = path.toShapes(true); // Converte il percorso SVG in forme 3D
+                shapes.forEach(shape => {
+                    const geometry = new THREE.ShapeGeometry(shape);
+                    const mesh = new THREE.Mesh(geometry, material);
+                    scene.add(mesh);
+                });
+            });
+        });
+
+        // Funzione di animazione
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Ricalcola la dimensione e la posizione della camera in caso di ridimensionamento della finestra
+        window.addEventListener('resize', function() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
