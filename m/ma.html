@@ -35,10 +35,15 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // Aggiunta del controllo orbitale per navigare nella scena
+        // Aggiunta dei controlli orbitanti per navigare nella scena
         const orbit = new OrbitControls(camera, renderer.domElement);
-        camera.position.z = 5;  // Imposta la posizione iniziale della camera
+        camera.position.set(0, 0, 5);  // Impostiamo una posizione iniziale per la camera
         orbit.update();
+
+        // Aggiunta di una luce direzionale
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(1, 1, 1).normalize();
+        scene.add(directionalLight);
 
         // Caricamento del file SVG
         const svgLoader = new SVGLoader();
@@ -46,7 +51,7 @@
 
         svgLoader.load(url, function (data) {
             const paths = data.paths;
-            const material = new THREE.MeshBasicMaterial({
+            const material = new THREE.MeshStandardMaterial({
                 color: 0xff0000, // Cambia il colore se necessario
                 side: THREE.DoubleSide
             });
@@ -56,6 +61,7 @@
                 shapes.forEach(shape => {
                     const geometry = new THREE.ShapeGeometry(shape);
                     const mesh = new THREE.Mesh(geometry, material);
+                    mesh.scale.set(0.5, 0.5, 0.5); // Scala il poligono
                     scene.add(mesh);
                 });
             });
@@ -64,6 +70,7 @@
         // Funzione di animazione
         function animate() {
             requestAnimationFrame(animate);
+            orbit.update();  // Aggiorna i controlli orbitanti
             renderer.render(scene, camera);
         }
 
